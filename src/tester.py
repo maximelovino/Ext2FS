@@ -24,7 +24,7 @@ import sys
 #   member ofs minix_filesystem class
 
 # testfile="ext2fs_lab1.img"
-testfile = "smallimg0.ext2.img"
+testfile = "../data/smallimg0.ext2.img"
 BLOCK_SIZE = 1024
 workfile = testfile + ".gen"
 string = "dd if=" + testfile + " of=" + workfile + " bs=1024 2>/dev/null"

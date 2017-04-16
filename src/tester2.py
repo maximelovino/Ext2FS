@@ -24,7 +24,7 @@ import sys
 #   member ofs minix_filesystem class
 
 #testfile="ext2fs_lab1.img"
-workfile="mediumimg0.ext2.img"
+workfile = "../data/mediumimg0.ext2.img"
 BLOCK_SIZE=2048
 
 class Ext2Tester(unittest.TestCase):

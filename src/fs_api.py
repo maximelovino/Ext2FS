@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import hexdump
+from hexdump import *
 import stat
 import struct
 
