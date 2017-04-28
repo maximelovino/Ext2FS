@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from hexdump import hexdump
 
 import fs_inode
 import fs_superbloc
@@ -13,6 +14,7 @@ from bloc_device import *
 class ext2(object):
     SIZE_OF_BGROUP_DESC = 32
     BGROUP_DESC_OFFSET = 2048
+
     def __init__(self, filename):
         # Superbloc is always at offset 1024 and of size 1024
         # Group descriptor block is always at offset 2048 (right after superbloc) and of size blocSize
@@ -23,17 +25,18 @@ class ext2(object):
         self.device = bloc_device(self.blocSize, filename)
 
         # We find the number of bloc groups like that and then we read each struct in the block of the group descriptors
-        groupCnt = self.superbloc.s_inodes_count / self.superbloc.s_inodes_per_group;
+        self.groupCnt = self.superbloc.s_inodes_count / self.superbloc.s_inodes_per_group;
         file = open(filename)
         file.seek(self.BGROUP_DESC_OFFSET)
         self.bgroup_desc_list = []
-        for i in xrange(groupCnt):
+        for i in xrange(self.groupCnt):
             rawbgroupDesc = file.read(self.SIZE_OF_BGROUP_DESC)
             self.bgroup_desc_list.append(fs_bloc_group.ext2_bgroup_desc(raw_bgroup_desc=rawbgroupDesc))
         file.close()
-
-        # self.inode_map = bitarray(self.device.read_bloc(self.bgroup_desc_list[0].bg_inode_bitmap))
-        # self.bloc_map = bitarray(device.read_bloc(self.bgroup_desc_list[0].bg_block_bitmap))
+        self.inode_map = bitarray(endian='little')
+        self.inode_map.frombytes(self.device.read_bloc(self.bgroup_desc_list[0].bg_inode_bitmap))
+        self.bloc_map = bitarray(endian='little')
+        self.bloc_map.frombytes(self.device.read_bloc(self.bgroup_desc_list[0].bg_block_bitmap))
         return
 
     # find the directory inode number of a path
