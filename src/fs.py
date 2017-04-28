@@ -11,13 +11,28 @@ from bloc_device import *
 # This class implements read only ext2 filesystem
 
 class ext2(object):
+    SIZE_OF_BGROUP_DESC = 32
+    BGROUP_DESC_OFFSET = 2048
     def __init__(self, filename):
-        superbloc = fs_superbloc.ext2_superbloc(filename)
-        self.blocSize = 1024 << superbloc.s_log_block_size
+        # Superbloc is always at offset 1024 and of size 1024
+        # Group descriptor block is always at offset 2048 (right after superbloc) and of size blocSize
+        # After that the offset are logical with the blocnumber stored in the structs
+
+        self.superbloc = fs_superbloc.ext2_superbloc(filename)
+        self.blocSize = 1024 << self.superbloc.s_log_block_size
         self.device = bloc_device(self.blocSize, filename)
-        # Contained in bloc 2
-        self.bgroup_desc_list = [fs_bloc_group.ext2_bgroup_desc(raw_bgroup_desc=self.device.read_bloc(2))]
-        # self.inode_map = bitarray(device.read_bloc(self.bgroup_desc_list[0].bg_inode_bitmap))
+
+        # We find the number of bloc groups like that and then we read each struct in the block of the group descriptors
+        groupCnt = self.superbloc.s_inodes_count / self.superbloc.s_inodes_per_group;
+        file = open(filename)
+        file.seek(self.BGROUP_DESC_OFFSET)
+        self.bgroup_desc_list = []
+        for i in xrange(groupCnt):
+            rawbgroupDesc = file.read(self.SIZE_OF_BGROUP_DESC)
+            self.bgroup_desc_list.append(fs_bloc_group.ext2_bgroup_desc(raw_bgroup_desc=rawbgroupDesc))
+        file.close()
+
+        # self.inode_map = bitarray(self.device.read_bloc(self.bgroup_desc_list[0].bg_inode_bitmap))
         # self.bloc_map = bitarray(device.read_bloc(self.bgroup_desc_list[0].bg_block_bitmap))
         return
 

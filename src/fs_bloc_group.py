@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import struct
-
+import hexdump
 
 class ext2_bgroup_desc(object):
     def __init__(self, raw_bgroup_desc=None, bg_block_bitmap=0, bg_inode_bitmap=0, bg_inode_table=0,

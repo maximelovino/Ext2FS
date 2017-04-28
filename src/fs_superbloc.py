@@ -4,15 +4,18 @@ from bloc_device import bloc_device
 
 
 class ext2_superbloc(object):
+    SUPERBLOC_OFFSET = 1024
+    SUPERBLOC_SIZE = 1024
     def __init__(self, diskfilename):
         # The superblock is always located at byte offset 1024 from the
         # start of the disk or partition.
         # => 1. Open diskfilename
         # => 2. Read the serialized superbloc content
         # => 3. Unserialized it
-        device = bloc_device(1024, diskfilename)
-        serialized = device.read_bloc(1)
-        self.read_super(serialized)
+        file = open(diskfilename)
+        file.seek(self.SUPERBLOC_OFFSET)
+        self.read_super(file.read(self.SUPERBLOC_SIZE))
+        file.close()
         return
 
     def read_super(self, raw_sb):

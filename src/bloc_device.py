@@ -9,8 +9,10 @@ class bloc_device(object):
         return
 
     def read_bloc(self, bloc_num, numofblk=1):
+        offset = bloc_num * self.blksize
+        size = numofblk * self.blksize
         workingFile = open(self.pathname)
-        workingFile.seek(self.blksize * bloc_num)
-        string = workingFile.read(numofblk * self.blksize)
+        workingFile.seek(offset)
+        string = workingFile.read(size)
         workingFile.close()
         return string

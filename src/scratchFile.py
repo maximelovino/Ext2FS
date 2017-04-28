@@ -9,4 +9,11 @@ import os
 import sys
 
 testfile = "../data/smallimg0.ext2.img"
+# testfile = "../data/mediumimg0.ext2.img"
 ext2fs = ext2(testfile)
+print ext2fs.superbloc
+print ext2fs.blocSize
+print "========"
+for i in ext2fs.bgroup_desc_list:
+    print i
+    print "=========="
