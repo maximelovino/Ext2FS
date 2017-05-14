@@ -6,7 +6,7 @@ from tester_answers2 import *
 testfile = "../data/mediumimg0.ext2.img"
 ext2fs = ext2(testfile)
 # print ext2fs.superbloc
-# print ext2fs.blocSize
+print ext2fs.blocSize
 # print "##############"
 # print ext2fs.bgroup_desc_list
 # print "##############"
@@ -18,15 +18,11 @@ ext2fs = ext2(testfile)
 # print ext2fs.groupCnt
 # print ext2fs.inode_map
 # print ext2fs.bloc_map
-for i in xrange(20):
-    print i
-    print "#####"
-    print ext2fs.inodes_list[i]
-    print "-----------"
-    print INODELIST[i]
-    print "#####"
-# print "======"
-
-# for node in ext2fs.inodes_list:
-#     print node
-#     print "======"
+print ext2fs.superbloc.s_inodes_count
+print ext2fs.groupCnt
+print ext2fs.superbloc.s_inodes_per_group
+print ext2fs.inodes_list[-1]
+print "====="
+print INODELIST[-1]
+print len(ext2fs.inodes_list)
+print len(INODELIST)

@@ -13,7 +13,6 @@ from bloc_device import *
 
 class ext2(object):
     SIZE_OF_BGROUP_DESC = 32
-    SIZE_OF_INODE = 128
     BGROUP_DESC_OFFSET = 2048
 
     def __init__(self, filename):
@@ -45,14 +44,15 @@ class ext2(object):
 
         self.inodes_list = []
         # First inode is always the empty inode
+        # Size of inode is variable, it's in superbloc as s_inode_size
+        # TODO seems like inode num must be the number for that bloc in order to make the test pass
         self.inodes_list.append(fs_inode.ext2_inode())
         i = 1
         for group in self.bgroup_desc_list:
             for k in xrange(self.superbloc.s_inodes_per_group):
-                file.seek(group.bg_inode_table * self.blocSize + self.SIZE_OF_INODE * k)
-                rawInode = file.read(self.SIZE_OF_INODE)
-                self.inodes_list.append(fs_inode.ext2_inode(raw_inode=rawInode, num=i))
-                i += 1
+                file.seek(group.bg_inode_table * self.blocSize + self.superbloc.s_inode_size * k)
+                rawInode = file.read(self.superbloc.s_inode_size)
+                self.inodes_list.append(fs_inode.ext2_inode(raw_inode=rawInode, num=k+1))
 
         file.close()
         return
