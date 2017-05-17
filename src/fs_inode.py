@@ -32,34 +32,35 @@ class ext2_inode(object):
             self.i_dtime = struct.unpack("<I", raw_inode[20:24])[0]
             self.i_gid = struct.unpack("<H", raw_inode[24:26])[0]
             self.i_links_count = struct.unpack("<H", raw_inode[26:28])[0]
+            # TODO here there is an error with blocks being rewritten
             self.i_blocks = struct.unpack("<I", raw_inode[28:32])[0]
             self.i_flags = struct.unpack("<I", raw_inode[32:36])[0]
             self.i_osd1 = struct.unpack("<I", raw_inode[36:40])[0]
             self.i_blocks = [
                 # 12 direct blocks = 12*1024 bytes = 0-12288 bytes max
                 # 12 direct blocks = 12*4096 bytes = 49152 bytes max
-                struct.unpack("<I", raw_inode[40:44])[0], \
-                struct.unpack("<I", raw_inode[44:48])[0], \
-                struct.unpack("<I", raw_inode[48:52])[0], \
-                struct.unpack("<I", raw_inode[52:56])[0], \
-                struct.unpack("<I", raw_inode[56:60])[0], \
-                struct.unpack("<I", raw_inode[60:64])[0], \
-                struct.unpack("<I", raw_inode[64:68])[0], \
-                struct.unpack("<I", raw_inode[68:72])[0], \
-                struct.unpack("<I", raw_inode[72:76])[0], \
-                struct.unpack("<I", raw_inode[76:80])[0], \
-                struct.unpack("<I", raw_inode[80:84])[0], \
-                struct.unpack("<I", raw_inode[84:88])[0], \
+                struct.unpack("<I", raw_inode[40:44])[0],
+                struct.unpack("<I", raw_inode[44:48])[0],
+                struct.unpack("<I", raw_inode[48:52])[0],
+                struct.unpack("<I", raw_inode[52:56])[0],
+                struct.unpack("<I", raw_inode[56:60])[0],
+                struct.unpack("<I", raw_inode[60:64])[0],
+                struct.unpack("<I", raw_inode[64:68])[0],
+                struct.unpack("<I", raw_inode[68:72])[0],
+                struct.unpack("<I", raw_inode[72:76])[0],
+                struct.unpack("<I", raw_inode[76:80])[0],
+                struct.unpack("<I", raw_inode[80:84])[0],
+                struct.unpack("<I", raw_inode[84:88])[0],
                 # 1 indirect block of 1024/4 block = 256*1024 = 12288-256k more bytes
                 # 1 indirect block of 4096/4 block = 1024*4096 = 4M more bytes
-                struct.unpack("<I", raw_inode[88:92])[0], \
+                struct.unpack("<I", raw_inode[88:92])[0],
                 # 1 double indirect block of 1024/4*1024/4 = 64k*1024 = 256k-64M more bytes
                 # 1 double indirect block of 4096/4*4096/4 = 1M*4096 = 4G more bytes
-                struct.unpack("<I", raw_inode[92:96])[0], \
+                struct.unpack("<I", raw_inode[92:96])[0],
                 # 1 triple indirect block of 1024/4*1024/4*1024/4 = 16M*1024 = 64M-16G more bytes
                 # 1 triple indirect block of 4096/4*4096/4*4096/4 = 1G*4096 = 4T more bytes
-                struct.unpack("<I", raw_inode[96:100])[0], \
-                ]
+                struct.unpack("<I", raw_inode[96:100])[0],
+            ]
             self.i_generation = struct.unpack("<I", raw_inode[100:104])[0]
             self.i_file_acl = struct.unpack("<I", raw_inode[104:108])[0]
             self.i_dir_acl = struct.unpack("<I", raw_inode[108:112])[0]

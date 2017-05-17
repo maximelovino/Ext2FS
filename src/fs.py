@@ -14,6 +14,7 @@ from bloc_device import *
 class ext2(object):
     SIZE_OF_BGROUP_DESC = 32
     BGROUP_DESC_OFFSET = 2048
+    SIZE_OF_BLOCK_ID = 4
 
     def __init__(self, filename):
         # Superbloc is always at offset 1024 and of size 1024
@@ -45,16 +46,19 @@ class ext2(object):
         self.inodes_list = []
         # First inode is always the empty inode
         # Size of inode is variable, it's in superbloc as s_inode_size
-        # TODO seems like inode num must be the number for that bloc in order to make the test pass
+        # seems like inode num must be the number for that bloc in order to make the test pass
+        # TODO try to use device.readBloc to read the appropriate blocs directly
         self.inodes_list.append(fs_inode.ext2_inode())
         i = 1
         for group in self.bgroup_desc_list:
+            rawBlocs = self.device.read_bloc(group.bg_inode_table, (self.superbloc.s_inode_size * self.superbloc.s_inodes_per_group) / self.blocSize);
             for k in xrange(self.superbloc.s_inodes_per_group):
-                file.seek(group.bg_inode_table * self.blocSize + self.superbloc.s_inode_size * k)
-                rawInode = file.read(self.superbloc.s_inode_size)
-                self.inodes_list.append(fs_inode.ext2_inode(raw_inode=rawInode, num=k+1))
+                rawInode = rawBlocs[k*self.superbloc.s_inode_size:(k+1)*self.superbloc.s_inode_size]
+                self.inodes_list.append(fs_inode.ext2_inode(raw_inode=rawInode, num=k + 1))
 
         file.close()
+
+        self.indirectBlocksSize = self.blocSize / self.SIZE_OF_BLOCK_ID
         return
 
     # find the directory inode number of a path
@@ -71,9 +75,17 @@ class ext2(object):
         return
 
     def bmap(self, inode, blk):
-        return
+        if (blk < 12) and (blk >= 0):
+            return inode.i_blocks[blk]
+        elif (blk >= 12) and (blk < 12 + self.indirectBlocksSize):
+            data = self.device.read_bloc(inode.i_blocks[12])
+            return struct.unpack("<I", data[(blk - 12) * self.SIZE_OF_BLOCK_ID:(
+                                                                               blk - 12) * self.SIZE_OF_BLOCK_ID + self.SIZE_OF_BLOCK_ID])[
+                0]
+        else:
+            return 0
 
-        # lookup for a name in a directory, and return its inode number,
+    # lookup for a name in a directory, and return its inode number,
 
     # given inode directory dinode
     # ext2 release 0 store directories in a linked list of records
