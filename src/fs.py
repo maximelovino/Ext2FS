@@ -58,7 +58,10 @@ class ext2(object):
 
         file.close()
 
-        self.indirectBlocksSize = self.blocSize / self.SIZE_OF_BLOCK_ID
+        self.blockIDsInBlock = self.blocSize / self.SIZE_OF_BLOCK_ID
+        self.indirectBlocksCount =  12 + self.blockIDsInBlock
+        self.doubleIndirectBlockCount = self.indirectBlocksCount + self.blockIDsInBlock ** 2
+        self.tripleIndirectBlockCount = self.doubleIndirectBlockCount + self.blockIDsInBlock ** 3
         return
 
     # find the directory inode number of a path
@@ -77,11 +80,19 @@ class ext2(object):
     def bmap(self, inode, blk):
         if (blk < 12) and (blk >= 0):
             return inode.i_blocks[blk]
-        elif (blk >= 12) and (blk < 12 + self.indirectBlocksSize):
+        elif (blk >= 12) and (blk < self.indirectBlocksCount):
             data = self.device.read_bloc(inode.i_blocks[12])
-            return struct.unpack("<I", data[(blk - 12) * self.SIZE_OF_BLOCK_ID:(
-                                                                               blk - 12) * self.SIZE_OF_BLOCK_ID + self.SIZE_OF_BLOCK_ID])[
-                0]
+            blk = blk - 12
+            return struct.unpack("<I", data[blk * self.SIZE_OF_BLOCK_ID:(blk + 1)* self.SIZE_OF_BLOCK_ID])[0]
+        elif (blk >= self.indirectBlocksCount) and (blk < self.doubleIndirectBlockCount):
+            firstIndirect = self.device.read_bloc(inode.i_blocks[13])
+            blk -= self.indirectBlocksCount
+            secondBlock= blk / self.blockIDsInBlock
+            secondIndirect = self.device.read_bloc(struct.unpack("<I",firstIndirect[secondBlock*self.SIZE_OF_BLOCK_ID:(secondBlock+1)*self.SIZE_OF_BLOCK_ID])[0])
+            lastBlock = blk % self.blockIDsInBlock
+            return struct.unpack("<I",secondIndirect[lastBlock*self.SIZE_OF_BLOCK_ID:(lastBlock + 1)*self.SIZE_OF_BLOCK_ID])[0]
+        elif (blk >= self.doubleIndirectBlockCount) and (blk < self.tripleIndirectBlockCount):
+            return 0
         else:
             return 0
 
