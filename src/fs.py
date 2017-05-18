@@ -15,6 +15,7 @@ class ext2(object):
     SIZE_OF_BGROUP_DESC = 32
     BGROUP_DESC_OFFSET = 2048
     SIZE_OF_BLOCK_ID = 4
+    ROOT_INODE = 2
 
     def __init__(self, filename):
         # Superbloc is always at offset 1024 and of size 1024
@@ -48,7 +49,6 @@ class ext2(object):
         # Size of inode is variable, it's in superbloc as s_inode_size
         # seems like inode num must be the number for that bloc in order to make the test pass
         self.inodes_list.append(fs_inode.ext2_inode())
-        i = 1
         for group in self.bgroup_desc_list:
             rawBlocs = self.device.read_bloc(group.bg_inode_table, (
                 self.superbloc.s_inode_size * self.superbloc.s_inodes_per_group) / self.blocSize);
@@ -69,14 +69,24 @@ class ext2(object):
     # given : ex '/usr/bin/cat' return the inode
     # of '/usr/bin'
     def dirnamei(self, path):
-        return
+        pathArray = path.split('/')
+        inodeNum = self.ROOT_INODE
+        for name in pathArray[1:-1]:
+            inodeNum = self.lookup_entry(self.inodes_list[inodeNum], name)
+
+        return inodeNum
         # find an inode number according to its path
 
     # ex : '/usr/bin/cat'
     # only works with absolute paths
 
     def namei(self, path):
-        return
+        if path == "/":
+            return self.ROOT_INODE
+
+        pathArray = path.split('/')
+
+        return self.lookup_entry(self.inodes_list[self.dirnamei(path)], pathArray[-1])
 
     def bmap(self, inode, blk):
         if (blk < 12) and (blk >= 0):
