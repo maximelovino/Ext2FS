@@ -59,8 +59,9 @@ class ext2(object):
         file.close()
 
         self.blockIDsInBlock = self.blocSize / self.SIZE_OF_BLOCK_ID
-        self.indirectBlocksCount =  12 + self.blockIDsInBlock
-        self.doubleIndirectBlockCount = self.indirectBlocksCount + self.blockIDsInBlock ** 2
+        self.indirectBlocksCount = 12 + self.blockIDsInBlock
+        self.doubleBlock = self.blockIDsInBlock ** 2
+        self.doubleIndirectBlockCount = self.indirectBlocksCount + self.doubleBlock
         self.tripleIndirectBlockCount = self.doubleIndirectBlockCount + self.blockIDsInBlock ** 3
         return
 
@@ -88,10 +89,15 @@ class ext2(object):
             firstIndirect = self.device.read_bloc(inode.i_blocks[13])
             blk -= self.indirectBlocksCount
             secondBlock= blk / self.blockIDsInBlock
-            secondIndirect = self.device.read_bloc(struct.unpack("<I",firstIndirect[secondBlock*self.SIZE_OF_BLOCK_ID:(secondBlock+1)*self.SIZE_OF_BLOCK_ID])[0])
+            # If indirect block is not used, we return 0, because block 0 isn't a datablock
+            blocToRead = struct.unpack("<I",firstIndirect[secondBlock*self.SIZE_OF_BLOCK_ID:(secondBlock+1)*self.SIZE_OF_BLOCK_ID])[0]
+            if blocToRead == 0:
+                return 0
+            secondIndirect = self.device.read_bloc(blocToRead)
             lastBlock = blk % self.blockIDsInBlock
             return struct.unpack("<I",secondIndirect[lastBlock*self.SIZE_OF_BLOCK_ID:(lastBlock + 1)*self.SIZE_OF_BLOCK_ID])[0]
         elif (blk >= self.doubleIndirectBlockCount) and (blk < self.tripleIndirectBlockCount):
+            # TODO triple indirect
             return 0
         else:
             return 0
