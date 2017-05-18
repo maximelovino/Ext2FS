@@ -6,6 +6,7 @@ from bloc_device import bloc_device
 class ext2_superbloc(object):
     SUPERBLOC_OFFSET = 1024
     SUPERBLOC_SIZE = 1024
+
     def __init__(self, diskfilename):
         # The superblock is always located at byte offset 1024 from the
         # start of the disk or partition.

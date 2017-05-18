@@ -2,54 +2,37 @@ from fs import *
 from tester_answers2 import *
 # from tester_answers import *
 
+from hexdump import hexdump
+
 # testfile = "../data/smallimg0.ext2.img"
 testfile = "../data/mediumimg0.ext2.img"
 ext2fs = ext2(testfile)
-# print ext2fs.superbloc
-print ext2fs.blocSize
-print ext2fs.indirectBlocksCount
-print ext2fs.doubleIndirectBlockCount
-# print "##############"
-# print ext2fs.bgroup_desc_list
-# print "##############"
-# print "========"
-# for i in ext2fs.bgroup_desc_list:
-#     print i
-#     print "=========="
-# print len(ext2fs.bgroup_desc_list)
-# print ext2fs.groupCnt
-# print ext2fs.inode_map
-# print ext2fs.bloc_map
-# print ext2fs.superbloc.s_inodes_count
-# print ext2fs.groupCnt
-# print ext2fs.superbloc.s_inodes_per_group
-# print ext2fs.inodes_list[-1]
-# print "====="
-# print INODELIST[-1]
-# print len(ext2fs.inodes_list)
-# print len(INODELIST)
 
-dir_bmap_list = []
-inode_num = 23306
-for i in range(0, 12):
-    bmap_bloc = ext2fs.bmap(ext2fs.inodes_list[inode_num], i)
-    dir_bmap_list.append(bmap_bloc)
+print ext2fs.inodes_list[2]
 
-print dir_bmap_list
-print DIRMAP
-indir_bmap_list = []
-for i in range(12, (ext2fs.blocSize / 4) + 12):
-    bmap_bloc = ext2fs.bmap(ext2fs.inodes_list[inode_num], i)
-    indir_bmap_list.append(bmap_bloc)
+data = ext2fs.device.read_bloc(1038)
+data += ext2fs.device.read_bloc(1112)
+data += ext2fs.device.read_bloc(1113)
+data += ext2fs.device.read_bloc(1402)
+data += ext2fs.device.read_bloc(1404)
 
-print indir_bmap_list
-print INDIRMAP
-dbl_indir_bmap_list = []
-for i in range((ext2fs.blocSize / 4) + 12, 1024):
-    bmap_bloc = ext2fs.bmap(ext2fs.inodes_list[inode_num], i)
-    dbl_indir_bmap_list.append(bmap_bloc)
-print dbl_indir_bmap_list
-print DBLINDIRMAP
-
-print len(dbl_indir_bmap_list)
-print len(DBLINDIRMAP)
+start = 0
+inodeNum = 1
+while inodeNum != 0:
+    tempStart = start
+    inodeNum = struct.unpack("<I", data[tempStart:tempStart+4])[0]
+    tempStart += 4
+    recLength = struct.unpack("<H", data[tempStart:tempStart +2])[0]
+    tempStart += 2
+    nameLength = struct.unpack("<B", data[tempStart:tempStart +1])[0]
+    tempStart += 1
+    fileType = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
+    tempStart += 1
+    name = data[tempStart:tempStart + nameLength]
+    start += recLength
+    print inodeNum
+    print recLength
+    print nameLength
+    print fileType
+    print name
+    print "========"

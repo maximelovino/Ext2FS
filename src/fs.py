@@ -47,13 +47,13 @@ class ext2(object):
         # First inode is always the empty inode
         # Size of inode is variable, it's in superbloc as s_inode_size
         # seems like inode num must be the number for that bloc in order to make the test pass
-        # TODO try to use device.readBloc to read the appropriate blocs directly
         self.inodes_list.append(fs_inode.ext2_inode())
         i = 1
         for group in self.bgroup_desc_list:
-            rawBlocs = self.device.read_bloc(group.bg_inode_table, (self.superbloc.s_inode_size * self.superbloc.s_inodes_per_group) / self.blocSize);
+            rawBlocs = self.device.read_bloc(group.bg_inode_table, (
+                self.superbloc.s_inode_size * self.superbloc.s_inodes_per_group) / self.blocSize);
             for k in xrange(self.superbloc.s_inodes_per_group):
-                rawInode = rawBlocs[k*self.superbloc.s_inode_size:(k+1)*self.superbloc.s_inode_size]
+                rawInode = rawBlocs[k * self.superbloc.s_inode_size:(k + 1) * self.superbloc.s_inode_size]
                 self.inodes_list.append(fs_inode.ext2_inode(raw_inode=rawInode, num=k + 1))
 
         file.close()
@@ -84,18 +84,21 @@ class ext2(object):
         elif (blk >= 12) and (blk < self.indirectBlocksCount):
             data = self.device.read_bloc(inode.i_blocks[12])
             blk = blk - 12
-            return struct.unpack("<I", data[blk * self.SIZE_OF_BLOCK_ID:(blk + 1)* self.SIZE_OF_BLOCK_ID])[0]
+            return struct.unpack("<I", data[blk * self.SIZE_OF_BLOCK_ID:(blk + 1) * self.SIZE_OF_BLOCK_ID])[0]
         elif (blk >= self.indirectBlocksCount) and (blk < self.doubleIndirectBlockCount):
             firstIndirect = self.device.read_bloc(inode.i_blocks[13])
             blk -= self.indirectBlocksCount
-            secondBlock= blk / self.blockIDsInBlock
+            secondBlock = blk / self.blockIDsInBlock
             # If indirect block is not used, we return 0, because block 0 isn't a datablock
-            blocToRead = struct.unpack("<I",firstIndirect[secondBlock*self.SIZE_OF_BLOCK_ID:(secondBlock+1)*self.SIZE_OF_BLOCK_ID])[0]
+            blocToRead = struct.unpack("<I", firstIndirect[secondBlock * self.SIZE_OF_BLOCK_ID:(
+                                                                                                   secondBlock + 1) * self.SIZE_OF_BLOCK_ID])[
+                0]
             if blocToRead == 0:
                 return 0
             secondIndirect = self.device.read_bloc(blocToRead)
             lastBlock = blk % self.blockIDsInBlock
-            return struct.unpack("<I",secondIndirect[lastBlock*self.SIZE_OF_BLOCK_ID:(lastBlock + 1)*self.SIZE_OF_BLOCK_ID])[0]
+            return struct.unpack("<I", secondIndirect[
+                                       lastBlock * self.SIZE_OF_BLOCK_ID:(lastBlock + 1) * self.SIZE_OF_BLOCK_ID])[0]
         elif (blk >= self.doubleIndirectBlockCount) and (blk < self.tripleIndirectBlockCount):
             # TODO triple indirect
             return 0
@@ -111,4 +114,27 @@ class ext2(object):
     # - the end of the linked list as an inode num equal to zero.
 
     def lookup_entry(self, dinode, name):
-        return
+        data = ''
+        # TODO check if it's correct to take into consideration only the direct blocks
+        for i in xrange(12):
+            toRead = self.bmap(dinode, i)
+            if toRead != 0:
+                data += self.device.read_bloc(toRead)
+
+        start = 0
+        inodeNum = 1
+        while inodeNum != 0:
+            tempStart = start
+            inodeNum = struct.unpack("<I", data[tempStart:tempStart + 4])[0]
+            tempStart += 4
+            recLength = struct.unpack("<H", data[tempStart:tempStart + 2])[0]
+            tempStart += 2
+            nameLength = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
+            tempStart += 1
+            fileType = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
+            tempStart += 1
+            filename = data[tempStart:tempStart + nameLength]
+            start += recLength
+            if filename == name:
+                return inodeNum
+        return 0

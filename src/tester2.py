@@ -72,8 +72,8 @@ class Ext2Tester(unittest.TestCase):
     # we only test the bitmap in the first bloc group
     def test_4_fs_inode_and_bloc_bitmaps(self):
         self.ext2fs = ext2(workfile)
-        self.assertEqual(self.ext2fs.inode_map, INODEBITMAP1);
-        self.assertEqual(self.ext2fs.bloc_map, ZONEBITMAP1);
+        self.assertEqual(self.ext2fs.inode_map, INODEBITMAP1)
+        self.assertEqual(self.ext2fs.bloc_map, ZONEBITMAP1)
 
     # inode list content test
     def test_5_fs_inode_list(self):
