@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from hexdump import hexdump
 
 import fs_inode
 import fs_superbloc
@@ -73,7 +72,6 @@ class ext2(object):
         inodeNum = self.ROOT_INODE
         for name in pathArray[1:-1]:
             inodeNum = self.lookup_entry(self.inodes_list[inodeNum], name)
-
         return inodeNum
         # find an inode number according to its path
 
@@ -83,35 +81,52 @@ class ext2(object):
     def namei(self, path):
         if path == "/":
             return self.ROOT_INODE
-
         pathArray = path.split('/')
-
         return self.lookup_entry(self.inodes_list[self.dirnamei(path)], pathArray[-1])
 
     def bmap(self, inode, blk):
         if (blk < 12) and (blk >= 0):
             return inode.i_blocks[blk]
         elif (blk >= 12) and (blk < self.indirectBlocksCount):
-            data = self.device.read_bloc(inode.i_blocks[12])
+            blocToRead = inode.i_blocks[12]
+            if blocToRead == 0:
+                return 0
+            data = self.device.read_bloc(blocToRead)
             blk = blk - 12
-            return struct.unpack("<I", data[blk * self.SIZE_OF_BLOCK_ID:(blk + 1) * self.SIZE_OF_BLOCK_ID])[0]
+            return struct.unpack_from("<I", data, blk * self.SIZE_OF_BLOCK_ID)[0]
         elif (blk >= self.indirectBlocksCount) and (blk < self.doubleIndirectBlockCount):
-            firstIndirect = self.device.read_bloc(inode.i_blocks[13])
+            blocToRead = inode.i_blocks[13]
+            if blocToRead == 0:
+                return 0
+            firstIndirect = self.device.read_bloc(blocToRead)
             blk -= self.indirectBlocksCount
             secondBlock = blk / self.blockIDsInBlock
             # If indirect block is not used, we return 0, because block 0 isn't a datablock
-            blocToRead = struct.unpack("<I", firstIndirect[secondBlock * self.SIZE_OF_BLOCK_ID:(
-                                                                                                   secondBlock + 1) * self.SIZE_OF_BLOCK_ID])[
-                0]
+            blocToRead = struct.unpack_from("<I", firstIndirect, secondBlock * self.SIZE_OF_BLOCK_ID)[0]
             if blocToRead == 0:
                 return 0
             secondIndirect = self.device.read_bloc(blocToRead)
             lastBlock = blk % self.blockIDsInBlock
-            return struct.unpack("<I", secondIndirect[
-                                       lastBlock * self.SIZE_OF_BLOCK_ID:(lastBlock + 1) * self.SIZE_OF_BLOCK_ID])[0]
+            return struct.unpack_from("<I", secondIndirect, lastBlock * self.SIZE_OF_BLOCK_ID)[0]
         elif (blk >= self.doubleIndirectBlockCount) and (blk < self.tripleIndirectBlockCount):
-            # TODO triple indirect
-            return 0
+            blocToRead = inode.i_blocks[14]
+            if blocToRead == 0:
+                return 0
+            firstIndirect = self.device.read_bloc(blocToRead)
+            blk -= self.doubleIndirectBlockCount
+            secondBlockID = blk / (self.blockIDsInBlock ** 2)
+            blocToRead = struct.unpack_from("<I", firstIndirect, secondBlockID * self.SIZE_OF_BLOCK_ID)[0]
+            if blocToRead == 0:
+                return 0
+            secondIndirect = self.device.read_bloc(blocToRead)
+            blk %= (self.blockIDsInBlock ** 2)
+            thirdBlockID = blk / self.blockIDsInBlock
+            blocToRead = struct.unpack_from("<I", secondIndirect, thirdBlockID * self.SIZE_OF_BLOCK_ID)[0]
+            if blocToRead == 0:
+                return 0
+            thirdIndirect = self.device.read_bloc(blocToRead)
+            blk %= self.blockIDsInBlock
+            return struct.unpack_from("<I", thirdIndirect, blk * self.SIZE_OF_BLOCK_ID)[0]
         else:
             return 0
 

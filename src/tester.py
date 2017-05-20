@@ -142,6 +142,7 @@ class Ext2Tester(unittest.TestCase):
         b = fsapi.read(fd, 0, 123456)
         self.assertEqual(b, API_READ1)
         b = fsapi.read(fd, 2000, 2345)
+        self.assertEqual(len(b), len(API_READ2))
         self.assertEqual(b, API_READ2)
 
     def test_a_fs_api_attr(self):
