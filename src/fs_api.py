@@ -6,6 +6,7 @@ import math
 
 
 class ext2_file_api(object):
+    openFDs = []
     def __init__(self, filesystem):
         self.fs = filesystem
         return
@@ -22,12 +23,14 @@ class ext2_file_api(object):
     # inode. file descriptor is just an handle used to find the
     # corresponding inode. This handle is allocated by the filesystem.
     def open(self, path):
-        return self.fs.inodes_list[self.fs.namei(path)]
+        inode = self.fs.inodes_list[self.fs.namei(path)]
+        ext2_file_api.openFDs.append(inode)
+        return inode
 
     # release file descriptor entry, should we flush buffers : no, this is separate ?
     # openfiles[fd] = None 
     def close(self, fd):
-        return
+        return ext2_file_api.openFDs.remove(fd)
 
     # read nbytes from the file descriptor previously opened, starting at the given offset
     def read(self, fd, offset, count):
@@ -68,4 +71,39 @@ class ext2_file_api(object):
     # note that is not a syscall but a function from the libc§
 
     def dodir(self, path):
-        return dirlist
+        inode = self.open(path)
+        data = ''
+        for i in xrange(12):
+            toRead = self.fs.bmap(inode, i)
+            if toRead != 0:
+                data += self.fs.device.read_bloc(toRead)
+
+        dirList = []
+        start = 0
+        inodeNum = 1
+        # TODO Check, because we could go further than the size of the data while reading this
+        while inodeNum != 0 or start == len(data):
+            tempStart = start
+            if tempStart + 4 >= len(data):
+                break
+            inodeNum = struct.unpack("<I", data[tempStart:tempStart + 4])[0]
+            tempStart += 4
+            if tempStart + 2 >= len(data):
+                break
+            recLength = struct.unpack("<H", data[tempStart:tempStart + 2])[0]
+            tempStart += 2
+            if tempStart + 1 >= len(data):
+                break
+            nameLength = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
+            tempStart += 1
+            if tempStart + 1 >= len(data):
+                break
+            fileType = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
+            tempStart += 1
+            if tempStart + nameLength >= len(data):
+                break
+            filename = data[tempStart:tempStart + nameLength]
+            start += recLength
+            if inodeNum != 0:
+                dirList.append(filename)
+        return dirList

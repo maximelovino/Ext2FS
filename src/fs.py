@@ -148,6 +148,7 @@ class ext2(object):
 
         start = 0
         inodeNum = 1
+        # TODO Check, because we could go further than the size of the data while reading this
         while inodeNum != 0:
             tempStart = start
             inodeNum = struct.unpack("<I", data[tempStart:tempStart + 4])[0]
