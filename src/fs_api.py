@@ -62,6 +62,8 @@ class ext2_file_api(object):
             'st_size': inode.i_size,
             'st_gid': inode.i_gid,
             'st_uid': inode.i_uid,
+            'st_blocks': math.ceil(inode.i_size/512.0),
+            'st_blksize': self.fs.blocSize
         }
         return stat
 
