@@ -7,6 +7,7 @@ import math
 
 class ext2_file_api(object):
     openFDs = []
+    toFreeFDs = []
 
     def __init__(self, filesystem):
         self.fs = filesystem
@@ -17,29 +18,49 @@ class ext2_file_api(object):
     # This is a worthwhile optimisation as it we avoid allocating a full block for the symlink, 
     # and most symlinks are less than 60 characters long. 
     def readlink(self, path):
-        return
+        fd = self.open(path)
+        inodeNum = ext2_file_api.openFDs[fd]
+        inode = self.fs.inodes_list[inodeNum]
+        data = ''
+        if inode.i_size <= 60:
+            # read from bloc indexes direct
+            data = struct.pack("<15I", *inode.i_blocks)
+        else:
+            # read classic way from blocks
+            i = 0
+            tempBlock = self.fs.bmap(inode, i)
+            while tempBlock != 0:
+                data += self.fs.device.read_bloc(tempBlock)
+                i += 1
+                tempBlock = self.fs.bmap(inode,i)
+
+        return data.rstrip('\0')
+
 
     # open a file, i.e reserve a file descriptor
     # in the open file table, pointing to the corresponding
     # inode. file descriptor is just an handle used to find the
     # corresponding inode. This handle is allocated by the filesystem.
     def open(self, path):
-        #TODO where do we store the fd?
-        # We have to store the inode in an array, and return the index of the inode in that array
-        # Then in read, we read from the array
-        inode = self.fs.inodes_list[self.fs.namei(path)]
-        if not ext2_file_api.openFDs.__contains__(inode):
-            ext2_file_api.openFDs.append(inode)
-        return ext2_file_api.openFDs.index(inode)
+        inodeNum = self.fs.namei(path)
+
+        if len(ext2_file_api.toFreeFDs) == 0:
+            ext2_file_api.openFDs.append(inodeNum)
+            return len(ext2_file_api.openFDs) - 1
+        else:
+            idxToStore = ext2_file_api.toFreeFDs.pop()
+            ext2_file_api.openFDs[idxToStore] = inodeNum
+            return idxToStore
 
     # release file descriptor entry, should we flush buffers : no, this is separate ?
     # openfiles[fd] = None 
     def close(self, fd):
-        ext2_file_api.openFDs[fd] = None
+        ext2_file_api.toFreeFDs.append(fd)
 
     # read nbytes from the file descriptor previously opened, starting at the given offset
     def read(self, fd, offset, count):
-        inode = ext2_file_api.openFDs[fd]
+        inodeNum = ext2_file_api.openFDs[fd]
+        inode = self.fs.inodes_list[inodeNum]
         startingBlock = int(math.floor((offset * 1.0) / self.fs.blocSize))
         dataStart = offset % self.fs.blocSize
         data = ""
@@ -59,7 +80,8 @@ class ext2_file_api(object):
     #  'st_uid': 0, 'st_atime': 1423220038.6543322}
     def attr(self, path):
         fd = self.open(path)
-        inode = ext2_file_api.openFDs[fd]
+        inodeNum = ext2_file_api.openFDs[fd]
+        inode = self.fs.inodes_list[inodeNum]
         stat = {
             'st_ctime': inode.i_ctime,
             'st_mtime': inode.i_mtime,
@@ -82,7 +104,8 @@ class ext2_file_api(object):
 
     def dodir(self, path):
         fd = self.open(path)
-        inode = ext2_file_api.openFDs[fd]
+        inodeNum = ext2_file_api.openFDs[fd]
+        inode = self.fs.inodes_list[inodeNum]
         data = ''
         for i in xrange(12):
             toRead = self.fs.bmap(inode, i)
