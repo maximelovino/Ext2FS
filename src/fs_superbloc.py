@@ -57,7 +57,19 @@ class ext2_superbloc(object):
     # f_bavail is the available number of blocs
     def statfs(self, path):
         # TODO check what to do here
-        return
+        stat = {
+            'f_bsize': 0,
+            'f_frsize': 0,
+            'f_blocks': 0,
+            'f_bfree': 0,
+            'f_bavail':0,
+            'f_files':0,
+            'f_free':0,
+            'f_favail':0,
+            'f_flag':0,
+            'f_namemax':0
+        }
+        return stat
 
     def __str__(self):
         return "block_per_group:" + str(self.s_blocks_per_group) + "\n" + \

@@ -152,16 +152,27 @@ class ext2(object):
         start = 0
         inodeNum = 1
         # TODO Check, because we could go further than the size of the data while reading this
-        while inodeNum != 0:
+        # We used same test as in dodir
+        while inodeNum != 0 or start == len(data):
             tempStart = start
+            if tempStart + 4 >= len(data):
+                break
             inodeNum = struct.unpack("<I", data[tempStart:tempStart + 4])[0]
             tempStart += 4
+            if tempStart + 2 >= len(data):
+                break
             recLength = struct.unpack("<H", data[tempStart:tempStart + 2])[0]
             tempStart += 2
+            if tempStart + 1 >= len(data):
+                break
             nameLength = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
             tempStart += 1
+            if tempStart + 1 >= len(data):
+                break
             fileType = struct.unpack("<B", data[tempStart:tempStart + 1])[0]
             tempStart += 1
+            if tempStart + nameLength >= len(data):
+                break
             filename = data[tempStart:tempStart + nameLength]
             start += recLength
             if filename == name:

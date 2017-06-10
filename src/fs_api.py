@@ -83,16 +83,16 @@ class ext2_file_api(object):
         inodeNum = ext2_file_api.openFDs[fd]
         inode = self.fs.inodes_list[inodeNum]
         stat = {
-            'st_ctime': inode.i_ctime,
-            'st_mtime': inode.i_mtime,
-            'st_atime': inode.i_atime,
-            'st_nlink': inode.i_links_count,
-            'st_mode': inode.i_mode,
-            'st_size': inode.i_size,
-            'st_gid': inode.i_gid,
-            'st_uid': inode.i_uid,
-            'st_blocks': math.ceil(inode.i_size / 512.0),
-            'st_blksize': self.fs.blocSize
+            'st_ctime': int(inode.i_ctime),
+            'st_mtime': int(inode.i_mtime),
+            'st_atime': int(inode.i_atime),
+            'st_nlink': int(inode.i_links_count),
+            'st_mode': int(inode.i_mode),
+            'st_size': int(inode.i_size),
+            'st_gid': int(inode.i_gid),
+            'st_uid': int(inode.i_uid),
+            'st_blocks': int(math.ceil(inode.i_size / 512.0)),
+            'st_blksize': int(self.fs.blocSize)
         }
         self.close(fd)
         return stat
