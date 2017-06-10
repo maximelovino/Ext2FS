@@ -10,7 +10,7 @@ from fuse import FUSE, FuseOSError, Operations
 
 class Ext2UserFS(Operations):
    
-    def __init__(self,fileimage):
+    def     __init__(self,fileimage):
         self.api=fs_api.ext2_file_api(fs.ext2(fileimage))
 
     # Filesystem methods

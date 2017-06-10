@@ -82,7 +82,10 @@ class ext2(object):
         if path == "/":
             return self.ROOT_INODE
         pathArray = path.split('/')
-        return self.lookup_entry(self.inodes_list[self.dirnamei(path)], pathArray[-1])
+        node = self.lookup_entry(self.inodes_list[self.dirnamei(path)], pathArray[-1])
+        if node is None:
+            raise OSError(2, 'No such file or directory', path)
+        return node
 
     def bmap(self, inode, blk):
         if (blk < 12) and (blk >= 0):

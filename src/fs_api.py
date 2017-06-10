@@ -7,6 +7,7 @@ import math
 
 class ext2_file_api(object):
     openFDs = []
+
     def __init__(self, filesystem):
         self.fs = filesystem
         return
@@ -23,23 +24,28 @@ class ext2_file_api(object):
     # inode. file descriptor is just an handle used to find the
     # corresponding inode. This handle is allocated by the filesystem.
     def open(self, path):
+        #TODO where do we store the fd?
+        # We have to store the inode in an array, and return the index of the inode in that array
+        # Then in read, we read from the array
         inode = self.fs.inodes_list[self.fs.namei(path)]
-        ext2_file_api.openFDs.append(inode)
-        return inode
+        if not ext2_file_api.openFDs.__contains__(inode):
+            ext2_file_api.openFDs.append(inode)
+        return ext2_file_api.openFDs.index(inode)
 
     # release file descriptor entry, should we flush buffers : no, this is separate ?
     # openfiles[fd] = None 
     def close(self, fd):
-        return ext2_file_api.openFDs.remove(fd)
+        ext2_file_api.openFDs[fd] = None
 
     # read nbytes from the file descriptor previously opened, starting at the given offset
     def read(self, fd, offset, count):
+        inode = ext2_file_api.openFDs[fd]
         startingBlock = int(math.floor((offset * 1.0) / self.fs.blocSize))
         dataStart = offset % self.fs.blocSize
         data = ""
         i = startingBlock
         while (len(data) - dataStart) < count:
-            toRead = self.fs.bmap(fd, i)
+            toRead = self.fs.bmap(inode, i)
             i += 1
             if toRead == 0:
                 break
@@ -52,7 +58,8 @@ class ext2_file_api(object):
     # 'st_nlink': 36, 'st_mode': 16877, 'st_size': 4096, 'st_gid': 0, \
     #  'st_uid': 0, 'st_atime': 1423220038.6543322}
     def attr(self, path):
-        inode = self.open(path)
+        fd = self.open(path)
+        inode = ext2_file_api.openFDs[fd]
         stat = {
             'st_ctime': inode.i_ctime,
             'st_mtime': inode.i_mtime,
@@ -62,9 +69,10 @@ class ext2_file_api(object):
             'st_size': inode.i_size,
             'st_gid': inode.i_gid,
             'st_uid': inode.i_uid,
-            'st_blocks': math.ceil(inode.i_size/512.0),
+            'st_blocks': math.ceil(inode.i_size / 512.0),
             'st_blksize': self.fs.blocSize
         }
+        self.close(fd)
         return stat
 
         # implementation of readdir(3) :
@@ -73,7 +81,8 @@ class ext2_file_api(object):
     # note that is not a syscall but a function from the libc§
 
     def dodir(self, path):
-        inode = self.open(path)
+        fd = self.open(path)
+        inode = ext2_file_api.openFDs[fd]
         data = ''
         for i in xrange(12):
             toRead = self.fs.bmap(inode, i)
@@ -108,4 +117,5 @@ class ext2_file_api(object):
             start += recLength
             if inodeNum != 0:
                 dirList.append(filename)
+        self.close(fd)
         return dirList

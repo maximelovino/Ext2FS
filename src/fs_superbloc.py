@@ -56,6 +56,7 @@ class ext2_superbloc(object):
     # f_bfree is use to compute the "used" field from df command
     # f_bavail is the available number of blocs
     def statfs(self, path):
+        # TODO check what to do here
         return
 
     def __str__(self):
