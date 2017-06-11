@@ -58,16 +58,16 @@ class ext2_superbloc(object):
     def statfs(self, path):
         # TODO check what to do here
         stat = {
-            'f_bsize': 0,
-            'f_frsize': 0,
-            'f_blocks': 0,
-            'f_bfree': 0,
-            'f_bavail':0,
-            'f_files':0,
-            'f_free':0,
+            'f_bsize': 1024 << self.s_log_block_size,
+            'f_frsize': 1024 >> self.s_log_frag_size if self.s_log_frag_size < 0 else 1024 << self.s_log_frag_size,
+            'f_blocks': self.s_frags_per_group * (self.s_blocks_count/self.s_blocks_per_group),
+            'f_bfree': self.s_free_blocks_count,
+            'f_bavail':self.s_free_blocks_count - self.s_r_blocks_count,
+            'f_files':self.s_inodes_count,
+            'f_free':self.s_free_inodes_count,
             'f_favail':0,
             'f_flag':0,
-            'f_namemax':0
+            'f_namemax':256
         }
         return stat
 

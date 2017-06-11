@@ -115,7 +115,7 @@ class ext2_file_api(object):
         dirList = []
         start = 0
         inodeNum = 1
-        # TODO Check, because we could go further than the size of the data while reading this
+        
         while inodeNum != 0 or start == len(data):
             tempStart = start
             if tempStart + 4 >= len(data):

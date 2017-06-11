@@ -38,10 +38,18 @@ class ext2(object):
         # TODO check how can that work for test 2
         # it works because only the one from the first group is checked, if we want to do correctly,
         # we should do the complete bitmap, but it will not be used in the rest of the project as it is read-only
+
+        # TODO this doesn't work, the bitmaps are not big enough, we have to include all groups
         self.inode_map = bitarray(endian='little')
-        self.inode_map.frombytes(self.device.read_bloc(self.bgroup_desc_list[0].bg_inode_bitmap))
         self.bloc_map = bitarray(endian='little')
-        self.bloc_map.frombytes(self.device.read_bloc(self.bgroup_desc_list[0].bg_block_bitmap))
+        dataInodeMap = ''
+        dataBlocMap = ''
+        for i in self.bgroup_desc_list:
+            dataInodeMap += self.device.read_bloc(i.bg_inode_bitmap)
+            dataBlocMap += self.device.read_bloc(i.bg_block_bitmap)
+
+        self.inode_map.frombytes(dataInodeMap)
+        self.bloc_map.frombytes(dataBlocMap)
 
         self.inodes_list = []
         # First inode is always the empty inode
