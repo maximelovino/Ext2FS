@@ -7,11 +7,34 @@ import struct
 
 def main(imageFilePath):
     print "You want to search in " + imageFilePath
+    print "========"
     fs = ext2(imageFilePath)
+    api = ext2_file_api(fs)
 
     list = getAllDeletedPaths(fs, "/")
+    i = 0
+    for name in list:
+        print str(i) + "\t" + name['name']
+        i += 1
 
-    print list
+    try:
+        choice = int(raw_input('We can retrieve these files for you, type the number of the one you want: '))
+    except ValueError:
+        print "Not a number"
+
+    if choice >= len(list) or choice < 0:
+        print "This number is not valid"
+    else:
+        print "You have chosen the file " + list[choice]['name']
+        print "Contacting NSA, asking for a copy of your file if they still have it"
+        fd = api.open(list[choice]['name'])
+        data = api.read(fd, 0, fs.inodes_list[list[choice]['inode']].i_size)
+        pathToSave = raw_input("File is ready, where do you want to save it?")
+        file = open(pathToSave,"w+")
+        file.write(data)
+        file.close()
+        print "Done, next time be more careful when deleting files"
+
 
 
 def getAllDeletedPaths(fs, startpath):
@@ -56,7 +79,9 @@ def getAllDeletedPaths(fs, startpath):
         if (fs.inodes_list[inodeNum].i_mode >> (4 * 3)) == 4:
             dirList.extend(getAllDeletedPaths(fs, startpath + (os.sep if startpath != "/" else "") + filename))
         elif fs.inode_map[inodeNum] == 0:
-            dirList.append(startpath + (os.sep if startpath != "/" else "") + filename)
+            dirList.append({
+                'name': startpath + (os.sep if startpath != "/" else "") + filename,
+                'inode': inodeNum})
     api.close(fd)
     return dirList
 
