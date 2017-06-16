@@ -5,9 +5,13 @@ from fs_api import ext2_file_api
 
 from hexdump import hexdump
 
-# testfile = "../data/smallimg0.ext2.img"
-testfile = "../data/mediumimg0.ext2.img"
+testfile = "../data/smallimg0.ext2.img"
+# testfile = "../data/mediumimg0.ext2.img"
 ext2fs = ext2(testfile)
+
+print ext2fs.superbloc.s_inodes_count
+print len(ext2fs.inodes_list)
+print len(ext2fs.inode_map)
 
 # print ext2fs.inodes_list[2]
 #
@@ -37,7 +41,3 @@ ext2fs = ext2(testfile)
 #     print fileType
 #     print name
 #     print "========"
-
-fsapi = ext2_file_api(ext2fs)
-rlink1 = fsapi.readlink("/tcptraceroute")
-rlink2 = fsapi.readlink("/hahaha")

@@ -30,11 +30,10 @@ def main(imageFilePath):
         fd = api.open(list[choice]['name'])
         data = api.read(fd, 0, fs.inodes_list[list[choice]['inode']].i_size)
         pathToSave = raw_input("File is ready, where do you want to save it?")
-        file = open(pathToSave,"w+")
+        file = open(pathToSave, "w+")
         file.write(data)
         file.close()
         print "Done, next time be more careful when deleting files"
-
 
 
 def getAllDeletedPaths(fs, startpath):
@@ -78,7 +77,9 @@ def getAllDeletedPaths(fs, startpath):
             continue
         if (fs.inodes_list[inodeNum].i_mode >> (4 * 3)) == 4:
             dirList.extend(getAllDeletedPaths(fs, startpath + (os.sep if startpath != "/" else "") + filename))
-        elif fs.inode_map[inodeNum] == 0:
+        elif fs.inode_map[inodeNum - 1] == 0:
+            # TODO ask teacher if this is logical
+            # don't know if -1 here or not
             dirList.append({
                 'name': startpath + (os.sep if startpath != "/" else "") + filename,
                 'inode': inodeNum})
