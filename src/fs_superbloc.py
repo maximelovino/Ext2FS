@@ -68,7 +68,8 @@ class ext2_superbloc(object):
             'f_files': self.s_inodes_count,
             'f_free': self.s_free_inodes_count,
             'f_favail': self.s_inodes_count - self.s_first_ino,
-            'f_flag': 0,  # can't find flags
+            'f_fsid': self.s_creator_os,
+            'f_flag': 0,
             'f_namemax': 256
         }
         return stat

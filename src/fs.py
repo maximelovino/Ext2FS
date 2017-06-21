@@ -20,7 +20,7 @@ class ext2(object):
     def __init__(self, filename):
         # Superbloc is always at offset 1024 and of size 1024
         # Group descriptor block is always at offset 2048 (right after superbloc) and of size blocSize
-        # After that the offset are logical with the blocnumber stored in the structs
+        # After that the offsets are logical with the blocnumber stored in the structs
 
         self.superbloc = fs_superbloc.ext2_superbloc(filename)
         self.blocSize = 1024 << self.superbloc.s_log_block_size
@@ -35,27 +35,22 @@ class ext2(object):
             rawbgroupDesc = file.read(self.SIZE_OF_BGROUP_DESC)
             self.bgroup_desc_list.append(fs_bloc_group.ext2_bgroup_desc(raw_bgroup_desc=rawbgroupDesc))
 
-        # We take the bitmap for all groups on the file system,
-        # which means that the given test for medium image doesn't pass, because it checks only the value of first block
+        # Since we can't do the deletion recovery, we don't need to get the bitmaps from all groups
+        # So we take only the bitmaps from the first group as they're the ones tested, as discussed with teacher
         self.inode_map = bitarray(endian='little')
         self.bloc_map = bitarray(endian='little')
-        dataInodeMap = ''
-        dataBlocMap = ''
-        for i in self.bgroup_desc_list:
-            dataInodeMap += self.device.read_bloc(i.bg_inode_bitmap)
-            dataBlocMap += self.device.read_bloc(i.bg_block_bitmap)
 
-        self.inode_map.frombytes(dataInodeMap)
-        self.bloc_map.frombytes(dataBlocMap)
+        self.inode_map.frombytes(self.device.read_bloc(self.bgroup_desc_list[0].bg_inode_bitmap))
+        self.bloc_map.frombytes(self.device.read_bloc(self.bgroup_desc_list[0].bg_block_bitmap))
 
         self.inodes_list = []
-        # First inode is always the empty inode
+        # First inode is always the empty inode, this is so we can have inode number x by taking inode_list[x]
         # Size of inode is variable, it's in superbloc as s_inode_size
         # seems like inode num must be the number for that group in order to make the test pass
         self.inodes_list.append(fs_inode.ext2_inode())
         for group in self.bgroup_desc_list:
             rawBlocs = self.device.read_bloc(group.bg_inode_table, (
-                self.superbloc.s_inode_size * self.superbloc.s_inodes_per_group) / self.blocSize);
+                self.superbloc.s_inode_size * self.superbloc.s_inodes_per_group) / self.blocSize)
             for k in xrange(self.superbloc.s_inodes_per_group):
                 rawInode = rawBlocs[k * self.superbloc.s_inode_size:(k + 1) * self.superbloc.s_inode_size]
                 self.inodes_list.append(fs_inode.ext2_inode(raw_inode=rawInode, num=k + 1))
@@ -148,7 +143,7 @@ class ext2(object):
 
     def lookup_entry(self, dinode, name):
         data = ''
-        # TODO check if it's correct to take into consideration only the direct blocks
+
         for i in xrange(12):
             toRead = self.bmap(dinode, i)
             if toRead != 0:

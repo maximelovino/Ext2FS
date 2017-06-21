@@ -23,7 +23,7 @@ class ext2_file_api(object):
         inode = self.fs.inodes_list[inodeNum]
         data = ''
         if inode.i_size <= 60:
-            # read from bloc indexes direct
+            # read from bloc indexes directly
             data = struct.pack("<15I", *inode.i_blocks)
         else:
             # read classic way from blocks
@@ -32,10 +32,9 @@ class ext2_file_api(object):
             while tempBlock != 0:
                 data += self.fs.device.read_bloc(tempBlock)
                 i += 1
-                tempBlock = self.fs.bmap(inode,i)
-
+                tempBlock = self.fs.bmap(inode, i)
+        # Remove trailing zeros  when returning
         return data.rstrip('\0')
-
 
     # open a file, i.e reserve a file descriptor
     # in the open file table, pointing to the corresponding
@@ -115,7 +114,7 @@ class ext2_file_api(object):
         dirList = []
         start = 0
         inodeNum = 1
-        
+
         while inodeNum != 0 or start == len(data):
             tempStart = start
             if tempStart + 4 >= len(data):

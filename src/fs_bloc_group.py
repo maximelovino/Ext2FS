@@ -2,6 +2,7 @@
 import struct
 import hexdump
 
+
 class ext2_bgroup_desc(object):
     def __init__(self, raw_bgroup_desc=None, bg_block_bitmap=0, bg_inode_bitmap=0, bg_inode_table=0,
                  bg_free_blocks_count=0, bg_free_inodes_count=0, bg_used_dirs_count=0):

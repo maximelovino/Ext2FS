@@ -8,10 +8,10 @@ import fs_api
 
 from fuse import FUSE, FuseOSError, Operations
 
+
 class Ext2UserFS(Operations):
-   
-    def     __init__(self,fileimage):
-        self.api=fs_api.ext2_file_api(fs.ext2(fileimage))
+    def __init__(self, fileimage):
+        self.api = fs_api.ext2_file_api(fs.ext2(fileimage))
 
     # Filesystem methods
     # ==================
@@ -35,13 +35,15 @@ class Ext2UserFS(Operations):
         return self.api.open(path)
 
     def read(self, path, length, offset, fh):
-        return self.api.read(fh,offset,length)
+        return self.api.read(fh, offset, length)
 
     def release(self, path, fh):
         return self.api.close(fh)
 
+
 def main(mountpoint, fileimage):
     FUSE(Ext2UserFS(fileimage), mountpoint, foreground=True, nothreads=True)
+
 
 if __name__ == '__main__':
     main(sys.argv[2], sys.argv[1])

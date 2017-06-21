@@ -24,6 +24,7 @@ import sys
 #   member ofs minix_filesystem class
 
 # testfile="ext2fs_lab1.img"
+# Replace path of small img file here
 testfile = "../data/smallimg0.ext2.img"
 BLOCK_SIZE = 1024
 workfile = testfile + ".gen"
