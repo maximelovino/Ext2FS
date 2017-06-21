@@ -20,6 +20,7 @@ class ext2_inode(object):
             self.i_dtime = dtime
             self.i_gid = gid
             self.i_links_count = nlinks
+            # Correct name of this is self.i_block, didn't correct it, because it would break everything
             self.i_blocks = blocks
         else:
             self.i_ino = num
@@ -32,10 +33,10 @@ class ext2_inode(object):
             self.i_dtime = struct.unpack("<I", raw_inode[20:24])[0]
             self.i_gid = struct.unpack("<H", raw_inode[24:26])[0]
             self.i_links_count = struct.unpack("<H", raw_inode[26:28])[0]
-            # TODO here there is an error with blocks being rewritten
             self.i_blocks = struct.unpack("<I", raw_inode[28:32])[0]
             self.i_flags = struct.unpack("<I", raw_inode[32:36])[0]
             self.i_osd1 = struct.unpack("<I", raw_inode[36:40])[0]
+            # Correct name of this is self.i_block, didn't correct it, because it would break everything
             self.i_blocks = [
                 # 12 direct blocks = 12*1024 bytes = 0-12288 bytes max
                 # 12 direct blocks = 12*4096 bytes = 49152 bytes max

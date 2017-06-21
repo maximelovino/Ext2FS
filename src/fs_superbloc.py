@@ -56,19 +56,20 @@ class ext2_superbloc(object):
     # f_bfree is use to compute the "used" field from df command
     # f_bavail is the available number of blocs
     def statfs(self, path):
-        # TODO check what to do here
-        # Especially about the content of the variables
+        # The first few entries of the inode tables are reserved.
+        # In revision 0 there are 11 entries reserved while in revision 1 (EXT2_DYNAMIC_REV) and
+        # later the number of reserved inodes entries is specified	in the s_first_ino of the superblock structure.
         stat = {
             'f_bsize': 1024 << self.s_log_block_size,
             'f_frsize': 1024 >> self.s_log_frag_size if self.s_log_frag_size < 0 else 1024 << self.s_log_frag_size,
-            'f_blocks': self.s_frags_per_group * (self.s_blocks_count/self.s_blocks_per_group),
+            'f_blocks': self.s_frags_per_group * (self.s_blocks_count / self.s_blocks_per_group),
             'f_bfree': self.s_free_blocks_count,
-            'f_bavail':self.s_free_blocks_count - self.s_r_blocks_count,
-            'f_files':self.s_inodes_count,
-            'f_free':self.s_free_inodes_count,
-            'f_favail':0, # Don't know what to put here
-            'f_flag':0, # can't find flags
-            'f_namemax':256
+            'f_bavail': self.s_free_blocks_count - self.s_r_blocks_count,
+            'f_files': self.s_inodes_count,
+            'f_free': self.s_free_inodes_count,
+            'f_favail': self.s_inodes_count - self.s_first_ino,
+            'f_flag': 0,  # can't find flags
+            'f_namemax': 256
         }
         return stat
 

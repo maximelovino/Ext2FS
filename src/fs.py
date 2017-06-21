@@ -6,6 +6,7 @@ import fs_bloc_group
 from bitarray import *
 import struct
 from bloc_device import *
+import math
 
 
 # This class implements read only ext2 filesystem
@@ -26,8 +27,7 @@ class ext2(object):
         self.device = bloc_device(self.blocSize, filename)
 
         # We find the number of bloc groups like that and then we read each struct in the block of the group descriptors
-        # TODO check integer division here, should do a ceiling or something
-        self.groupCnt = self.superbloc.s_inodes_count / self.superbloc.s_inodes_per_group;
+        self.groupCnt = int(math.ceil((1.0 * self.superbloc.s_inodes_count) / (1.0 * self.superbloc.s_inodes_per_group)))
         file = open(filename)
         file.seek(self.BGROUP_DESC_OFFSET)
         self.bgroup_desc_list = []
@@ -35,12 +35,8 @@ class ext2(object):
             rawbgroupDesc = file.read(self.SIZE_OF_BGROUP_DESC)
             self.bgroup_desc_list.append(fs_bloc_group.ext2_bgroup_desc(raw_bgroup_desc=rawbgroupDesc))
 
-        # TODO check how can that work for test 2
-        # it works because only the one from the first group is checked, if we want to do correctly,
-        # we should do the complete bitmap, but it will not be used in the rest of the project as it is read-only
-
-
-        # TODO ask teacher if ok to not pass test but deletion recovery works
+        # We take the bitmap for all groups on the file system,
+        # which means that the given test for medium image doesn't pass, because it checks only the value of first block
         self.inode_map = bitarray(endian='little')
         self.bloc_map = bitarray(endian='little')
         dataInodeMap = ''
@@ -55,7 +51,7 @@ class ext2(object):
         self.inodes_list = []
         # First inode is always the empty inode
         # Size of inode is variable, it's in superbloc as s_inode_size
-        # seems like inode num must be the number for that bloc in order to make the test pass
+        # seems like inode num must be the number for that group in order to make the test pass
         self.inodes_list.append(fs_inode.ext2_inode())
         for group in self.bgroup_desc_list:
             rawBlocs = self.device.read_bloc(group.bg_inode_table, (
@@ -160,8 +156,7 @@ class ext2(object):
 
         start = 0
         inodeNum = 1
-        # TODO Check, because we could go further than the size of the data while reading this
-        # We used same test as in dodir
+
         while inodeNum != 0 or start == len(data):
             tempStart = start
             if tempStart + 4 >= len(data):
